@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+geopy
+pulp
+gurobipy
