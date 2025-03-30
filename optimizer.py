@@ -51,7 +51,7 @@ def find_nearest_station(run_out_point, fuel_station_tree, df_stations):
     nearest_station = df_stations.iloc[idx]
     return nearest_station, dist
 
-geolocator = Nominatim(user_agent="myGeocoder")
+geolocator = Nominatim(user_agent="myGeocoder", timeout=10)
 
 def run_optimization_tool(preloaded_data):
     st.header("📊 Gurobi Shipment Optimizer")
