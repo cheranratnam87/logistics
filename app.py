@@ -64,7 +64,7 @@ def main():
         🚀 Built by <a href="https://www.linkedin.com/in/cheranratnam/" target="_blank">Cheran Ratnam</a> |
         📊 Data Source: <a href="https://faf.ornl.gov/faf5" target="_blank">FAF5 Freight Dataset</a> |
         🌐 <a href="https://www.linkedin.com/in/cheranratnam/" target="_blank">LinkedIn</a> |
-        💼 <a href="https://github.com/cheranratnam" target="_blank">GitHub</a>
+        💼 <a href="https://github.com/cheranratnam87/logistics" target="_blank">GitHub</a>
     </div>
     """, unsafe_allow_html=True)
 
