@@ -1,16 +1,18 @@
+# ✅ MUST be the first Streamlit command
 import streamlit as st
-from optimizer import run_optimization_tool, run_route_optimizer_ui
+st.set_page_config(page_title="Freight Pricing & Optimization Tool", layout="wide")
 
+from optimizer import run_optimization_tool, run_multi_destination_route_optimizer, load_data, load_cng_stations
+from pricing_engine import run_pricing_simulator
 
+# Preload data to reduce lag when switching tabs
+if "preloaded_data" not in st.session_state:
+    st.session_state.preloaded_data = {
+        "freight_data": load_data(),
+        "cng_stations": load_cng_stations()
+    }
 
-# ✅ This must be first Streamlit command, inside main guard
 def main():
-    st.set_page_config(page_title="Freight Pricing & Optimization Tool", layout="wide")
-
-    # ⬅️ Import all optimizers and pricing tools
-    from pricing_engine import run_pricing_simulator
-    from optimizer import run_optimization_tool, run_route_optimizer_ui
-
     # --- Custom CSS Styling ---
     st.markdown(
         """
@@ -42,21 +44,24 @@ def main():
         unsafe_allow_html=True
     )
 
-    # --- Tabs ---
-    tab1, tab2, tab3 = st.tabs([
-        "🚛 Dynamic Pricing Simulator",
-        "📊 Shipment Optimizer",
-        "🗺️ Route Optimizer (with Fuel Stops)"
-    ])
+    # Use session state to remember the active tab
+    if "active_tab" not in st.session_state:
+        st.session_state.active_tab = "Dynamic Pricing Simulator"
 
-    with tab1:
-        run_pricing_simulator()
+    tabs = {
+        "Dynamic Pricing Simulator": run_pricing_simulator,
+        "Shipment Optimizer": lambda: run_optimization_tool(st.session_state.preloaded_data["freight_data"]),
+        "Route Optimizer (with Fuel Stops)": lambda: run_multi_destination_route_optimizer(
+            st.session_state.preloaded_data["freight_data"],
+            st.session_state.preloaded_data["cng_stations"]
+        ),
+    }
 
-    with tab2:
-        run_optimization_tool()
+    selected_tab = st.sidebar.radio("Select a Tool", list(tabs.keys()), index=list(tabs.keys()).index(st.session_state.active_tab))
+    st.session_state.active_tab = selected_tab
 
-    with tab3:
-        run_route_optimizer_ui()
+    # Run the selected tab's function
+    tabs[selected_tab]()
 
     # --- Footer ---
     st.markdown("""

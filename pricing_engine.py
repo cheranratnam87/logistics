@@ -23,7 +23,7 @@ df = load_data()
 def parse_coords_safe(coord_str):
     try:
         return ast.literal_eval(coord_str)
-    except:
+    except Exception:
         return None
 
 # --- Build city → coord map ---
@@ -38,11 +38,9 @@ valid_cities = [c for c in all_cities if city_coords_map.get(c) is not None]
 # --- Distance functions ---
 @st.cache_data
 def get_avg_distance(df, origin, destination):
+    # Cache results to avoid recalculating
     match = df[(df["origin_city"] == origin) & (df["destination_city"] == destination)]
-    if not match.empty:
-        dist = match["distance_miles"].mean()
-        return round(dist, 2) if dist >= 25 else None
-    return None
+    return round(match["distance_miles"].mean(), 2) if not match.empty else None
 
 def fallback_haversine_distance(origin, destination):
     o = city_coords_map.get(origin)
@@ -56,6 +54,7 @@ def fallback_haversine_distance(origin, destination):
 def run_pricing_simulator():
     st.subheader("🚛 Dynamic Freight Pricing Estimator (Industry Aligned)")
 
+    # Group inputs into a form to reduce re-renders
     with st.form("pricing_form"):
         col1, col2 = st.columns(2)
 
@@ -89,14 +88,12 @@ def run_pricing_simulator():
                 st.error("Please select both origin and destination.")
                 return
 
-            # Get distances
-            avg_dist = get_avg_distance(df, origin, destination)
-            fallback_dist = fallback_haversine_distance(origin, destination)
-            final_dist = avg_dist or fallback_dist or 300.0
+            # Avoid recalculating distances unnecessarily
+            final_dist = get_avg_distance(df, origin, destination) or fallback_haversine_distance(origin, destination) or 300.0
 
-            if avg_dist:
+            if get_avg_distance(df, origin, destination):
                 st.caption("📊 Using average from dataset.")
-            elif fallback_dist:
+            elif fallback_haversine_distance(origin, destination):
                 st.caption("🧭 Using geolocation estimate.")
             else:
                 st.caption("⚠️ Using default fallback distance of 300 miles.")
