@@ -1,8 +1,9 @@
 
-![logistics_gif](https://github.com/user-attachments/assets/e806ce72-3cb6-44b1-af45-5b7b03c10138)
-
 🚚 Freight Pricing & Optimization Dashboard
 This Streamlit app provides a dynamic freight cost estimator and a profit-maximizing shipment selector using FAF5 data. It's built to simulate real-world logistics pricing by incorporating factors like fuel prices, seasonality, shipment weight, and route characteristics.
+
+![logistics_gif](https://github.com/user-attachments/assets/e806ce72-3cb6-44b1-af45-5b7b03c10138)
+
 
 🔍 What It Does
 Freight Pricing Estimator
