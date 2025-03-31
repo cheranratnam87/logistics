@@ -88,9 +88,11 @@ def run_optimization_tool(preloaded_data):
         selected = [i for i in range(len(df_sample)) if x[i].X > 0.5]
         result = df_sample.iloc[selected]
 
+        total_routes = len(result)
+
         st.subheader("🚛 Optimization Results")
         st.write(result[['origin_city', 'destination_city', 'tons', 'distance_miles', 'profit']])
-        st.success(f"Total Profit: ${result['profit'].sum():,.2f} | Tons: {result['tons'].sum():,.0f} | Distance: {result['distance_miles'].sum():,.0f} mi")
+        st.success(f"Total Routes: {total_routes} | Total Profit: ${result['profit'].sum():,.2f} | Tons: {result['tons'].sum():,.0f} | Distance: {result['distance_miles'].sum():,.0f} mi")
 
 def run_multi_destination_route_optimizer(df, df_stations):
     st.header("🗺️ Route Optimizer with Refueling Logic")
