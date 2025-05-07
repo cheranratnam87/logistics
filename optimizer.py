@@ -6,13 +6,12 @@ import ast
 import gurobipy as gp
 from gurobipy import GRB
 from geopy.distance import geodesic, distance
-from geopy.geocoders import Nominatim
 from functools import lru_cache
 from scipy.spatial import KDTree
+import json
 
 @lru_cache(maxsize=None)
 def cached_geodesic(coord1, coord2):
-    """Cache geodesic distance calculations for performance."""
     return geodesic(coord1, coord2).miles
 
 @st.cache_data
@@ -26,6 +25,13 @@ def load_data(file_path="data/cleaned_freight_data.csv"):
 def load_cng_stations(file_path="data/all_stations_allfuelTypes.csv"):
     df = pd.read_csv(file_path)
     return df[['Station Name', 'Latitude', 'Longitude']].dropna()
+
+@st.cache_data
+def load_city_coords():
+    with open("data/city_coords.json", "r") as f:
+        return json.load(f)
+
+city_coords = load_city_coords()
 
 def parse_coords(coord_str):
     try:
@@ -41,17 +47,13 @@ def calculate_bearing(pointA, pointB):
     return (math.degrees(math.atan2(x, y)) + 360) % 360
 
 def build_fuel_station_index(df_stations):
-    """Build a KDTree for fast nearest-neighbor searches of fueling stations."""
     coords = df_stations[['Latitude', 'Longitude']].dropna().values
     return KDTree(coords), coords
 
 def find_nearest_station(run_out_point, fuel_station_tree, df_stations):
-    """Find the nearest fueling station to a given point."""
     dist, idx = fuel_station_tree.query(run_out_point)
     nearest_station = df_stations.iloc[idx]
     return nearest_station, dist
-
-geolocator = Nominatim(user_agent="myGeocoder", timeout=10)
 
 def run_optimization_tool(preloaded_data):
     st.header("📊 Gurobi Shipment Optimizer")
@@ -109,12 +111,9 @@ def run_multi_destination_route_optimizer(df, df_stations):
         return
 
     if st.button("Optimize Route"):
+
         def get_coords(city):
-            c = df[df['origin_city'] == city]['origin_coords'].dropna().values
-            if not len(c): c = df[df['destination_city'] == city]['destination_coords'].dropna().values
-            if len(c): return ast.literal_eval(c[0])
-            loc = geolocator.geocode(city)
-            return (loc.latitude, loc.longitude) if loc else None
+            return tuple(city_coords.get(city)) if city in city_coords else None
 
         cities = [origin] + destinations
         coords_dict = {c: get_coords(c) for c in cities}
@@ -126,8 +125,8 @@ def run_multi_destination_route_optimizer(df, df_stations):
         dist = {(i, j): cached_geodesic(coords_dict[cities[i]], coords_dict[cities[j]]) for i in range(n) for j in range(n) if i != j}
         model = gp.Model("route_optimizer")
         model.Params.OutputFlag = 0
-        model.Params.TimeLimit = 60  # Set a time limit for optimization
-        model.Params.MIPGap = 0.01  # Allow a small optimality gap
+        model.Params.TimeLimit = 60
+        model.Params.MIPGap = 0.01
 
         x = model.addVars(dist.keys(), vtype=GRB.BINARY)
         u = model.addVars(n, lb=0, ub=n - 1)
@@ -151,7 +150,6 @@ def run_multi_destination_route_optimizer(df, df_stations):
         details = {}
         total_distance = 0
 
-        # Build KDTree for fuel stations
         fuel_station_tree, fuel_station_coords = build_fuel_station_index(df_stations)
 
         for i in range(len(ordered) - 1):
