@@ -196,9 +196,5 @@ def main():
     else:
         run_multi_destination_route_optimizer(df, df_stations)
 
-    st.markdown("""
-    **Note:** Fuel Station Information is from [afdc.energy.gov](https://afdc.energy.gov/) alternative fuel station dataset. Hence there may be some station information missing and the stations that show up are alternative fuel stations.
-    """)
-
 if __name__ == "__main__":
     main()
